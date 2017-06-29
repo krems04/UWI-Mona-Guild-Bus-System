@@ -1,5 +1,7 @@
-Based on work by University of South Florida Bull Runner Application
+University of The West Indies Guild Bus System Realtime feed Generator
 ==================================
+
+Forked from thew University of South Florida Bull Runner Application
 
 Desktop application that retrieves GPS Position Updates from Traccar from the UWI Mona's Guild Bus System operations and produces Trip Updates and Vehicle Positions files in GTFS-realtime format.
 
