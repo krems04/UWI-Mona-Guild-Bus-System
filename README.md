@@ -1,7 +1,7 @@
-bullrunner-gtfs-realtime-generator [![Build Status](https://travis-ci.org/CUTR-at-USF/bullrunner-gtfs-realtime-generator.svg?branch=master)](https://travis-ci.org/CUTR-at-USF/bullrunner-gtfs-realtime-generator)
+Based on work by University of South Florida Bull Runner Application
 ==================================
 
-Desktop application that retrieves AVL data from the USF Bull Runner's AVL system and produces Trip Updates and Vehicle Positions files in GTFS-realtime format.
+Desktop application that retrieves GPS Position Updates from Traccar from the UWI Mona's Guild Bus System operations and produces Trip Updates and Vehicle Positions files in GTFS-realtime format.
 
 Protobuf URL endpoints for the feed: 
 
@@ -19,5 +19,6 @@ To run:
 
 ...from TARGET directory
 
-The Bull Runner GTFS can be found [here](https://github.com/CUTR-at-USF/bullrunner-gtfs-realtime-generator/blob/master/bullrunner-gtfs.zip) and should be extracted into `../myGTFS/`, as the GTFS-rt feed requires it to run.
+The original Bull Runner GTFS can be found [here](https://github.com/CUTR-at-USF/bullrunner-gtfs-realtime-generator/blob/master/bullrunner-gtfs.zip) and should be extracted into `../myGTFS/`, as the GTFS-rt feed requires it to run.
 
+# UWI-Mona-Guild-Bus-System-Realtime-Generator

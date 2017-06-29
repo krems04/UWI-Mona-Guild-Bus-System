@@ -35,10 +35,15 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.text.ParsePosition;
 
+import java.sql.Timestamp;
+import org.apache.commons.codec.binary.Base64;
+import java.net.URLConnection;
+
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.inject.Singleton;
 
+import org.apache.commons.codec.binary.Base64;
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
@@ -102,6 +107,7 @@ public class GtfsRealtimeProviderImpl {
 
 	private GtfsRealtimeExporterCutr _gtfsRealtimeProvider;
 	private URL _url;
+	private URL _vehiclePositionURL;
 	private BiHashMap<String, String, Float> routeVehiDirMap;
 	private BiHashMap<String, String, vehicleInfo> tripVehicleInfoMap;
 	private BiHashMap<String, String, StartTimes> routeVehicleStartTimeMap;
@@ -167,7 +173,8 @@ public class GtfsRealtimeProviderImpl {
 		
 		try {
 			//_providerConfig .setUrl(new URL( "http://usfbullrunner.com/region/0/routes"));
-			_providerConfig.generatesRouteMap(new URL( "https://usfbullrunner.com/region/0/routes"));
+			//_providerConfig.generatesRouteMap(new URL( "https://usfbullrunner.com/region/0/routes"));
+			_providerConfig.generatesRouteMap(new URL( "http://juandissimo.adkintegrations.com:8082/api/devices"));
 			_providerConfig.generateTripMap();
 			_providerConfig.generateServiceMap();
 			_providerConfig.extractSeqId();
@@ -511,17 +518,24 @@ public class GtfsRealtimeProviderImpl {
 		}
 	}
 
+	public URLConnection setUsernamePassword(URL url) throws IOException {
+        URLConnection urlConnection = url.openConnection();
+        String authString = "admin" + ":" + "admin";
+        String authStringEnc = new String(Base64.encodeBase64(authString.getBytes()));
+        urlConnection.setRequestProperty("Authorization", "Basic " + authStringEnc);
+        return urlConnection;
+    }
+		
+	
 	private Pair downloadVehicleDetails() throws IOException, JSONException {
-		URLConnection connection = null;
-		try {
-		    connection = _url.openConnection();
-		  } catch (Exception ex) {
-		    _log.error("Error in opening feeds url", ex);
-		  }
-		  
-		  connection.setConnectTimeout(10000);  // connectTimeout is time out in miliseconds
-		  connection.setReadTimeout(10000);
-		  java.io.InputStream in =  connection.getInputStream();
+		URL _vehiclePositionURL = new URL("http://juandissimo.adkintegrations.com:8082/api/positions");
+		
+		URLConnection urlConnection = setUsernamePassword(_vehiclePositionURL);
+		  urlConnection.setConnectTimeout(10000);  // connectTimeout is time out in miliseconds
+		  urlConnection.setReadTimeout(10000);
+		  java.io.InputStream in =  urlConnection.getInputStream();
+	
+			  
 
 		  BufferedReader reader = new BufferedReader(new InputStreamReader(in, "UTF-8"));
 
@@ -529,11 +543,11 @@ public class GtfsRealtimeProviderImpl {
 		  String inputLine;
 		  JSONArray stopIDsArray;
 		  JSONArray vehicleArray;
-		  try {
+	/*	  try {
 		    while ((inputLine = reader.readLine()) != null)
 		      builder.append(inputLine).append("\n");
 
-		    JSONObject object = (JSONObject) new JSONTokener(builder.toString())
+		   /* JSONObject object = (JSONObject) new JSONTokener(builder.toString())
 		            .nextValue();
 
 		    String data = object.getString("PredictionData");
@@ -546,9 +560,12 @@ public class GtfsRealtimeProviderImpl {
 			  _log.error("Error readline, server dosn't close the connection.", ex);
 		    stopIDsArray = null;
 		    vehicleArray = null;
-		  }
+		  }*/
+		    stopIDsArray = null;
+		    vehicleArray = null;
+		  
 		  return new Pair(stopIDsArray, vehicleArray);
-
+		  
 	 
 	}
 
@@ -645,22 +662,23 @@ public class GtfsRealtimeProviderImpl {
 	}
 	private void extractHeading (String route) throws IOException, JSONException{
 		int routeID = _providerConfig.routesMap.get(route);	
-	
-		String urlStr = ""+ "https://usfbullrunner.com/route/"+ routeID+"/vehicles";
+		Timestamp timestamp = new Timestamp(System.currentTimeMillis());
+		String urlStr = "http://juandissimo.adkintegrations.com:8082/api/positions?deviceId="+ routeID + "&from="+convertTime(timestamp.toString())+"&to="+convertTime(timestamp.toString());
+		System.out.println(urlStr);
 		JSONArray jsonVehicle = _providerConfig.downloadCofiguration(new URL( urlStr ));
 		
 		for (int i= 0; i < jsonVehicle.length(); i++ ){
 			
 			JSONObject child = jsonVehicle.getJSONObject(i);
-			String heading = child.getString("Heading");
-			float direction = getDirVal(heading);
-			String vehicleID = child.getString("Name");
+			float direction = child.getLong("course");
+			//float direction = getDirVal(heading);
+			String vehicleID = child.getString("deviceId");
 			routeVehiDirMap.put(route, vehicleID, direction);
 			
-			JSONObject coordinate = child.getJSONObject("Coordinate");
+			//JSONObject coordinate = child.getJSONObject("Coordinate");
 			vehicleInfo info = new vehicleInfo();
-			info.lat = (float) coordinate.getDouble("Latitude");
-			info.longi = (float) coordinate.getDouble("Longitude");
+			info.lat = child.getLong("latitude");
+			info.longi = child.getLong("longitude");
 			info.bearing = direction;
 
 			info.APCPercentage = child.getInt("APCPercentage");

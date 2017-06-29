@@ -1,0 +1,5 @@
+fare_id,price,currency_type,payment_method,transfers,transfer_duration
+h,130,JMD,0,0,
+d,130,JMD,0,0,
+s,140,JMD,0,0,
+p,150,JMD,0,0,

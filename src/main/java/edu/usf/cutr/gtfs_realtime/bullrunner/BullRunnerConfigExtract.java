@@ -1,5 +1,6 @@
 package edu.usf.cutr.gtfs_realtime.bullrunner;
 
+
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
@@ -12,14 +13,18 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.JSONTokener;
 
- 
+import org.apache.commons.codec.binary.Base64;
+import java.net.URLConnection;
+
+
 public class BullRunnerConfigExtract {
+
 	//private URL _url;
-	 private static final String path2tripsFile = "../myGTFS/trips.txt";
-	 private static final String path2calFile = "../myGTFS/calendar.txt";
-	 private static final String path2routeFile = "../myGTFS/routes.txt";
-	 private static final String path2stopTimesFile = "../myGTFS/stop_times.txt";
-	 private static final String path2frequenciesFile = "../myGTFS/frequencies.txt";
+	 private static final String path2tripsFile = "../GTFS/trips.txt";
+	 private static final String path2calFile = "../GTFS/calendar.txt";
+	 private static final String path2routeFile = "../GTFS/routes.txt";
+	 private static final String path2stopTimesFile = "../GTFS/stop_times.txt";
+	 private static final String path2frequenciesFile = "../GTFS/frequencies.txt";
 	/**
 	 * @param url
 	 *            the URL for the SEPTA vehicle data API.
@@ -40,9 +45,13 @@ public class BullRunnerConfigExtract {
 	 */
 	public JSONArray downloadCofiguration(URL _url) throws IOException, JSONException {
 
+		URLConnection urlConnection = setUsernamePassword(_url);
+		
 		BufferedReader reader = new BufferedReader(new InputStreamReader(
-				_url.openStream()));
-
+				urlConnection.getInputStream()));
+		
+		
+		
 		StringBuilder builder = new StringBuilder();
 		String inputLine;
 
@@ -58,7 +67,7 @@ public class BullRunnerConfigExtract {
 	public void generatesRouteMap(URL _url) throws IOException, JSONException {
 
 		JSONArray configArray = downloadCofiguration(_url);
-
+		
 		for (int i = 0; i < configArray.length(); i++) {
 
 			JSONObject obj = configArray.getJSONObject(i);
@@ -66,8 +75,18 @@ public class BullRunnerConfigExtract {
              * "ID":423,
       			"DisplayName":"A Route A",
              */
-			int ID = obj.getInt("ID");
-			String route = obj.getString("DisplayName").substring(0, 1);
+			int ID = obj.getInt("id");
+			String route = obj.getString("name");
+		
+			//String route = obj.getString("DisplayName").substring(0, 1);
+			//JSONObject Attributes = obj.getJSONObject("attributes");
+			//String testAttribute = Attributes.getString("TestAttribute");
+		//	System.out.println(String.format("Attributes => %s", testAttribute));
+			/*JSONObject routeInfo = obj.getJSONObject("attributes");
+				for(int j = 0 ; j < routeInfo.length() ; j++){
+			        JSONObject r = (JSONObject)routeInfo.get("TestAttribute");
+			        testAttribute = r.getString("TestAttribute");
+			    }*/
 			routesMap.put(route, ID);
 		}
 	}
@@ -105,7 +124,15 @@ public class BullRunnerConfigExtract {
 		}   
 
   } 
-	    
+	
+	
+	public URLConnection setUsernamePassword(URL url) throws IOException {
+        URLConnection urlConnection = url.openConnection();
+        String authString = "admin" + ":" + "admin";
+        String authStringEnc = new String(Base64.encodeBase64(authString.getBytes()));
+        urlConnection.setRequestProperty("Authorization", "Basic " + authStringEnc);
+        return urlConnection;
+    }
 		 
 
 	 /**
@@ -195,4 +222,7 @@ public class BullRunnerConfigExtract {
 			frequencies.close();
 		}
 	}
+	
+	
 }
+
